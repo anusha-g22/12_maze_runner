@@ -32,6 +32,44 @@ def generate_maze(cols, rows):
             stack.pop()
     return walls
 
+def shortest_path(walls, start, goal):
+    """Return a shortest path of (row, column) cells, or [] if unreachable."""
+    from collections import deque
+
+    rows, cols = len(walls), len(walls[0])
+    if not (0 <= start[0] < rows and 0 <= start[1] < cols):
+        return []
+    if not (0 <= goal[0] < rows and 0 <= goal[1] < cols):
+        return []
+
+    queue = deque([start])
+    previous = {start: None}
+    directions = ((-1, 0, 0, 1), (1, 0, 1, 0), (0, 1, 2, 3), (0, -1, 3, 2))
+
+    while queue:
+        r, c = queue.popleft()
+        if (r, c) == goal:
+            path = []
+            cell = goal
+            while cell is not None:
+                path.append(cell)
+                cell = previous[cell]
+            return path[::-1]
+
+        for dr, dc, wall_dir, opposite_dir in directions:
+            nr, nc = r + dr, c + dc
+            neighbor = (nr, nc)
+            if (0 <= nr < rows and 0 <= nc < cols
+                    and not walls[r][c][wall_dir]
+                    and neighbor not in previous):
+                # Require both cells to agree that their shared wall is open.
+                if walls[nr][nc][opposite_dir]:
+                    continue
+                previous[neighbor] = (r, c)
+                queue.append(neighbor)
+
+    return []
+
 def cell_rect(r, c, import_pygame=None):
     import pygame
     return pygame.Rect(c*CELL, r*CELL, CELL, CELL)
